@@ -1,20 +1,16 @@
 <?php
-/*
- * Copyright Cameron Manderson (c) 2011 All rights reserved.
- * Date: 5/09/11
- */
 
-namespace CodeJamTestSuite\Entity;
+namespace DoctrineTest\TestCase;
+use Doctrine\ORM\ORMException;
 
 /**
- * A Simple Test Case used for testing Doctrine ORM
- * Provides functions useful in testing your entities as your build them.
+ * Class EntityTestCase
+ * @package DoctrineTest\TestCase
  *
- * @author camm (cameronmanderson@gmail.com)
+ * Doctrine entity test case that creates a temporary Doctrine database.
  */
 class EntityTestCase extends \PHPUnit_Framework_TestCase
 {
-
     /**
      * @var \Doctrine\ORM\Tools\SchemaTool
      */
@@ -36,23 +32,17 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
     private $eventManager;
 
     /**
-     * @var array
+     * Default Doctrine Annotated entities to load.
+     * @var string[]
      */
     protected $paths = array();
 
     /**
+     * Optional database path to use for operations.
+     * If not set, will use an in-memory database
      * @var string
      */
-    protected $resource;
-
-    /**
-     * Set up called prior to running tests
-     * @return void
-     */
-    protected function setUp()
-    {
-        //
-    }
+    protected $dbPath;
 
     /**
      * Tear down process run after tests
@@ -60,23 +50,11 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function tearDown()
     {
-        //
-    }
+        parent::tearDown();
 
-    /**
-     * Loads a fixture
-     * @throws \Exception
-     * @param $fixtureClass
-     * @return void
-     */
-    public function loadFixture($fixtureClass)
-    {
-        if(!class_Exists($fixtureClass)) throw new \Exception('Could not locate the fixture class '  . $fixtureClass . '. Ensure it is autoloadable');
-        $fixture = new $fixtureClass();
-        if(!($fixture instanceof \Doctrine\Common\DataFixtures\FixtureInterface))
-            throw new \Exception('Class ' . $fixtureClass . ' does not implement the FixtureInterface.');
-
-        $fixture->load($this->getEntityManager());
+        if ($this->entityManager != null) {
+            $this->entityManager->getConnection()->close();
+        }
     }
 
     /**
@@ -102,15 +80,35 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Load a database schema into the database
-     * @param $entityClasses array of FQCN
+     * Loads a fixture
+     * @throws \Exception
+     * @param $fixtureClass
      * @return void
+     */
+    public function loadFixture($fixtureClass)
+    {
+        if(!class_Exists($fixtureClass)) throw new \Exception('Could not locate the fixture class ' . $fixtureClass . '. Ensure it is autoloadable');
+        $fixture = new $fixtureClass();
+        if(!($fixture instanceof \Doctrine\Common\DataFixtures\FixtureInterface))
+            throw new \Exception('Class ' . $fixtureClass . ' does not implement the FixtureInterface.');
+
+        $fixture->load($this->getEntityManager());
+
+        return $this;
+    }
+
+    /**
+     * Load a database schema into the database.
+     * This will drop the current database.
+     *
+     * @param $entityClasses array of FQCN
+     * @return $this
      */
     public function loadSchemas($entityClasses)
     {
         $this->dropDatabase();
         $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($this->getEntityManager());
-        
+
         $classes = array();
         foreach($entityClasses as $className) {
             $classes[] = $this->getEntityManager()->getClassMetadata($className);
@@ -118,38 +116,45 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
         if(!empty($classes)) {
             $schemaTool->createSchema($classes);
         }
+
+        return $this;
     }
 
     /**
      * Add doctrine event manager lifecycle listener
      * @param $events Array of Event constants to listen to
-     * @param $listener
-     * @return void
+     * @param object $listener The listener object.
+     * @throws \Exception
+     * @return $this
      */
     public function addLifecycleEventListener($events = array(), $listener)
     {
         if(empty($this->entityManager))
             throw new \Exception('Please establish the entity manager connection using getEntityManager prior to adding event listeners');
         $this->eventManager->addEventListener($events, $listener);
+
+        return $this;
     }
 
     /**
      * Add doctrine event manager lifecycle event subscriber
      * @throws \Exception
      * @param $subscriber
-     * @return void
+     * @return $this
      */
     public function addLifecycleEventSubscriber($subscriber)
     {
         if(empty($this->entityManager))
             throw new \Exception('Please establish the entity manager connection using getEntityManager prior to adding event subscribers');
         $this->eventManager->addEventSubscriber($subscriber);
+
+        return $this;
     }
 
     /**
      * Returns with the initialised entity manager
-     * @throws
-     * @return
+     * @throws \Doctrine\ORM\ORMException
+     * @return \Doctrine\ORM\EntityManager
      */
     public function getEntityManager()
     {
@@ -162,7 +167,7 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
         // TODO: Register Listeners
         $conn = array(
             'driver' => 'pdo_sqlite',
-            'path' => $this->resource,
+            'path' => $this->dbPath,
             'memory' => true
         );
         $config = \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration($this->paths, true);
@@ -189,6 +194,10 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
      */
     public function dropEntityManager()
     {
+        if ($this->entityManager != null) {
+            $this->entityManager->getConnection()->close();
+        }
+
         $this->entityManager = null;
     }
 
@@ -198,17 +207,15 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
      */
     public function dropDatabase()
     {
-        if(trim($this->getResource()) && preg_match('/\.db$', $this->getResource())) {
-            @unlink($this->getResource());
-        }
-        $this->dropEntityManager();
-    }
+        $dbPath = trim($this->dbPath);
 
-    /**
-     * @return string
-     */
-    public function getResource()
-    {
-        if(!empty($this->resources)) return __DIR__ . '/../Resources/test.db';
+        if(empty($dbPath))
+            return;
+
+        if(trim($dbPath) && preg_match('/\.db$', $dbPath)) {
+            @unlink($dbPath);
+        }
+
+        $this->dropEntityManager();
     }
 }
