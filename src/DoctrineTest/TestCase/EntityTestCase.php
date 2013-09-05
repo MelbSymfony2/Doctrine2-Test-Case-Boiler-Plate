@@ -45,6 +45,13 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
     protected $dbPath;
 
     /**
+     * Flag to indicate if doctrine should use the {@link \Doctrine\Common\Annotations\SimpleAnnotationReader} or the
+     * {@link \Doctrine\Common\Annotations\AnnotationReader}
+     * @var bool
+     */
+    protected $useSimpleAnnotationReader = false;
+
+    /**
      * Tear down process run after tests
      * @return void
      */
@@ -170,7 +177,7 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
             'path' => $this->dbPath,
             'memory' => true
         );
-        $config = \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration($this->paths, true);
+        $config = \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration($this->paths, true, null, null, $this->useSimpleAnnotationReader);
         if (!$config->getMetadataDriverImpl()) {
             throw ORMException::missingMappingDriverImpl();
         }

@@ -9,28 +9,31 @@
 
 namespace DoctrineTest\Test\Assets\Model\Simple;
 
+use Doctrine\ORM\Mapping AS ORM;
 
 /**
- * @Entity
+ * @ORM\Entity
  */
 class Car {
     /**
-     * @Id @Column(type="integer") @GeneratedValue
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue
      */
     public $id;
 
     /**
-     * @Column(type="string")
+     * @ORM\Column(type="string")
      */
     public $make;
 
     /**
-     * @Column(type="string")
+     * @ORM\Column(type="string")
      */
     public $model;
 
     /**
-     * @Column(type="integer")
+     * @ORM\Column(type="integer")
      */
     public $year;
 
