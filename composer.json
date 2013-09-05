@@ -1,5 +1,5 @@
 {
-    "name": " 51systems/doctrine-test",
+    "name": "51systems/doctrine-test",
     "description": "Doctrine2 Testing Library",
     "type": "library",
     "keywords": [
