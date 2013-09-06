@@ -32,6 +32,12 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
     private $eventManager;
 
     /**
+     * Fixture persistence to use when loading fixtures
+     * @var \Doctrine\Common\DataFixtures\ReferenceRepository
+     */
+    private $fixtureReferenceRepo;
+
+    /**
      * Default Doctrine Annotated entities to load.
      * @var string[]
      */
@@ -94,10 +100,16 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
      */
     public function loadFixture($fixtureClass)
     {
-        if(!class_Exists($fixtureClass)) throw new \Exception('Could not locate the fixture class ' . $fixtureClass . '. Ensure it is autoloadable');
+        if(!class_Exists($fixtureClass))
+            throw new \Exception('Could not locate the fixture class ' . $fixtureClass . '. Ensure it is autoloadable');
+
         $fixture = new $fixtureClass();
-        if(!($fixture instanceof \Doctrine\Common\DataFixtures\FixtureInterface))
+
+        if (!($fixture instanceof \Doctrine\Common\DataFixtures\FixtureInterface))
             throw new \Exception('Class ' . $fixtureClass . ' does not implement the FixtureInterface.');
+
+        if ($fixture instanceof \Doctrine\Common\DataFixtures\AbstractFixture)
+            $fixture->setReferenceRepository($this->getFixtureReferenceRepo());
 
         $fixture->load($this->getEntityManager());
 
@@ -205,7 +217,8 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
             $this->entityManager->getConnection()->close();
         }
 
-        $this->entityManager = null;
+        unset($this->entityManager);
+        unset($this->fixtureReferenceRepo);
     }
 
     /**
@@ -224,5 +237,15 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
         }
 
         $this->dropEntityManager();
+    }
+
+    /**
+     * @return \Doctrine\Common\DataFixtures\ReferenceRepository
+     */
+    public function getFixtureReferenceRepo()
+    {
+        if (!isset($this->fixtureReferenceRepo))
+            $this->fixtureReferenceRepo = new \Doctrine\Common\DataFixtures\ReferenceRepository($this->getEntityManager());
+        return $this->fixtureReferenceRepo;
     }
 }
