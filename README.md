@@ -1,31 +1,21 @@
-This is a basic Doctrine2 Test Case project to provide some boilerplate code and get you up and running with PHPUnit and developing Doctrine2 models.
+This is a basic Doctrine2 Test Library to be used with PHPUnit.
 
-This package was used for teach people how to develop models using Doctrine2, and test them as you go using PHPUnit. You can see the result [here](https://github.com/MelbSymfony2/Code-Jam-Session-2).
-
-Contributors:
+#Contributors:
 - [Cameron Manderson](https://github.com/cammanderson)
+- [Dustin Thomson](https://github.com/51systems)
+
+# Features
+- SQLite in-memory database used for tests
+- Fixture Support
+- Subscriber support
 
 # Installation
 
-Download the boilerplate code using the download link on the github repository page.
-
-Extract to your project
-
-Run `php -f vendors.php` to download the basic Doctrine ORM dependencies. It also downloads Symfony and Gedmo's DoctrineExtensions.
-
-Run `phpunit` in the root directory to run a basic environment check.
-
-By default, your model will be tested using a SQLLite RDBMS, requiring zero configuration. You can modify your EntityTestCase to change these details.
-
-# Writing your model
-
-Create a folder called `src` and create your packages and Entities as appropriate. See the Doctrine2 Documentation for more information about writing Entities.
+Install via composer.
 
 # Writing tests
 
-Create your tests under the folder `tests\CodeJamTestSuite`. You can rename this package, but you must update your `tests/bootstrap.php` autoload and namespaces accordingly.
-
-    namespace CodeJamTestSuite\Entity;
+    namespace Application\Test\Entity;
 
     class MyModelTest extends EntityTestCase
     {
