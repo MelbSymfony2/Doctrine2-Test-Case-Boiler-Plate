@@ -96,22 +96,39 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
      * Loads a fixture
      * @throws \Exception
      * @param $fixtureClass
-     * @return void
+     * @return $this
      */
     public function loadFixture($fixtureClass)
     {
-        if(!class_Exists($fixtureClass))
-            throw new \Exception('Could not locate the fixture class ' . $fixtureClass . '. Ensure it is autoloadable');
+        $this->loadFixtures(array($fixtureClass), true);
+    }
 
-        $fixture = new $fixtureClass();
+    /**
+     * Loads an array of fixtures.
+     *
+     * @param string[] $fixtureClasses List of fixture class names
+     * @param bool $append
+     * @return $this
+     * @throws \Exception
+     */
+    public function loadFixtures(array $fixtureClasses, $append = false)
+    {
+        $loader = new \Doctrine\Common\DataFixtures\Loader();
 
-        if (!($fixture instanceof \Doctrine\Common\DataFixtures\FixtureInterface))
-            throw new \Exception('Class ' . $fixtureClass . ' does not implement the FixtureInterface.');
+        foreach($fixtureClasses as $fixtureClass) {
+            if(!class_Exists($fixtureClass))
+                throw new \Exception('Could not locate the fixture class ' . $fixtureClass . '. Ensure it is autoloadable');
 
-        if ($fixture instanceof \Doctrine\Common\DataFixtures\AbstractFixture)
-            $fixture->setReferenceRepository($this->getFixtureReferenceRepo());
+            $fixture = new $fixtureClass();
 
-        $fixture->load($this->getEntityManager());
+            $loader->addFixture($fixture);
+        }
+
+        $purger = new \Doctrine\Common\DataFixtures\Purger\ORMPurger();
+        $executor = new \Doctrine\Common\DataFixtures\Executor\ORMExecutor($this->getEntityManager(), $purger);
+        $executor->setReferenceRepository($this->getFixtureReferenceRepo());
+
+        $executor->execute($loader->getFixtures(), $append);
 
         return $this;
     }
