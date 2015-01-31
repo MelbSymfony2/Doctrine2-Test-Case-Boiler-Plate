@@ -1,7 +1,10 @@
 <?php
 
 namespace DoctrineTest\TestCase;
+use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\ORM\ORMException;
+use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\ServiceManager;
 
 /**
  * Class EntityTestCase
@@ -15,6 +18,13 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
      * @var \Doctrine\ORM\Tools\SchemaTool
      */
     static $sqlLogger;
+
+    /**
+     * The doctrine configuration key to use.
+     *
+     * @var string
+     */
+    public $configurationKey = 'orm_default';
 
     /**
      * @var int
@@ -38,24 +48,22 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
     private $fixtureReferenceRepo;
 
     /**
-     * Default Doctrine Annotated entities to load.
-     * @var string[]
-     */
-    protected $paths = array();
-
-    /**
      * Optional database path to use for operations.
      * If not set, will use an in-memory database
      * @var string
      */
     protected $dbPath;
 
+
     /**
-     * Flag to indicate if doctrine should use the {@link \Doctrine\Common\Annotations\SimpleAnnotationReader} or the
-     * {@link \Doctrine\Common\Annotations\AnnotationReader}
-     * @var bool
+     * {@inheritdoc}
+     *
+     * In addition, automatically loads the schemas.
      */
-    protected $useSimpleAnnotationReader = false;
+    protected function setUp()
+    {
+        $this->autoLoadSchemas();
+    }
 
     /**
      * Tear down process run after tests
@@ -157,6 +165,22 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Automatically loads all entity classes into the database.
+     *
+     * @return $this
+     */
+    public function autoLoadSchemas()
+    {
+        $classes = $this->getEntityManager()
+            ->getConfiguration()
+            ->getMetadataDriverImpl()
+            ->getAllClassNames();
+
+        return $this->loadSchemas($classes);
+    }
+
+
+    /**
      * Add doctrine event manager lifecycle listener
      * @param $events Array of Event constants to listen to
      * @param object $listener The listener object.
@@ -197,29 +221,44 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
         // If we have an entity manager return it
         if(!empty($this->entityManager)) return $this->entityManager;
 
-        // Register a new entity
-        $this->eventManager = new \Doctrine\Common\EventManager();
+        $sl = $this->getServiceLocator();
 
-        // TODO: Register Listeners
+        // Register the event manager
+        $this->eventManager = $sl->get('doctrine.eventmanager.' . $this->configurationKey);
+
+        $globalConfig = $sl->get('config');
+
+        $options = new \DoctrineORMModule\Options\EntityManager($globalConfig['doctrine']['entitymanager'][$this->configurationKey]);
+
+        /** @var \Doctrine\Orm\Configuration $config */
+        $config = $sl->get($options->getConfiguration());
+
+        //setup some sane debugging defaults.
+        $config->setAutoGenerateProxyClasses(true);
+        $config->setHydrationCacheImpl(new ArrayCache());
+        $config->setMetadataCacheImpl(new ArrayCache());
+        $config->setQueryCacheImpl(new ArrayCache());
+        $config->setResultCacheImpl(new ArrayCache());
+
         $conn = array(
             'driver' => 'pdo_sqlite',
             'path' => $this->dbPath,
             'memory' => true
         );
-        $config = \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration($this->paths, true, null, null, $this->useSimpleAnnotationReader);
-        if (!$config->getMetadataDriverImpl()) {
-            throw ORMException::missingMappingDriverImpl();
-        }
 
         // Setup use of SQL Logger
         if(empty(self::$sqlLogger)) {
             self::$sqlLogger = new \Doctrine\DBAL\Logging\DebugStack();
         }
 
-        $config->setResultCacheImpl(new \Doctrine\Common\Cache\MemcacheCache('localhost', '11211'));
-
         $config->setSQLLogger(self::$sqlLogger);
         $conn = \Doctrine\DBAL\DriverManager::getConnection($conn, $config, $this->eventManager);
+
+        // initializing the resolver
+        // @todo should actually attach it to a fetched event manager here, and not
+        //       rely on its factory code
+        $sl->get($options->getEntityResolver());
+
         $this->entityManager = \Doctrine\ORM\EntityManager::create($conn, $config, $conn->getEventManager());
         return $this->entityManager;
     }
@@ -264,5 +303,17 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
         if (!isset($this->fixtureReferenceRepo))
             $this->fixtureReferenceRepo = new \Doctrine\Common\DataFixtures\ReferenceRepository($this->getEntityManager());
         return $this->fixtureReferenceRepo;
+    }
+
+    /**
+     * Returns the module configuration.
+     * This should return the same as calling {@link ServiceManager#get('config')}
+     *
+     * @return ServiceLocatorInterface
+     * @throws \Exception
+     */
+    protected function getServiceLocator()
+    {
+        return \Application\Test\Bootstrap::getServiceManager();
     }
 }
