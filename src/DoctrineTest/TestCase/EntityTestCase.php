@@ -271,6 +271,7 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
     {
         if ($this->entityManager != null) {
             $this->entityManager->getConnection()->close();
+            $this->entityManager->close();
         }
 
         unset($this->entityManager);
