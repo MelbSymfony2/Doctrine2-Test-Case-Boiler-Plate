@@ -12,7 +12,7 @@ use Zend\ServiceManager\ServiceManager;
  *
  * Doctrine entity test case that creates a temporary Doctrine database.
  */
-class EntityTestCase extends \PHPUnit_Framework_TestCase
+abstract class EntityTestCase extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var \Doctrine\ORM\Tools\SchemaTool
@@ -313,8 +313,5 @@ class EntityTestCase extends \PHPUnit_Framework_TestCase
      * @return ServiceLocatorInterface
      * @throws \Exception
      */
-    protected function getServiceLocator()
-    {
-        return \Application\Test\Bootstrap::getServiceManager();
-    }
+    protected abstract function getServiceLocator();
 }

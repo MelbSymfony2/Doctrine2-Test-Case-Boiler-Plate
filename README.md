@@ -50,4 +50,8 @@ Install via composer.
             $this->assertNotEmpty($myEntity->getId(), 'Should have got an ID for my entity');
 
         }
+        
+        protected function getServiceLocator() {
+            return \Application\Test\Bootstrap::getServiceManager();
+        }
     }
