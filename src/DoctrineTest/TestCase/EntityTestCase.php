@@ -2,7 +2,10 @@
 
 namespace DoctrineTest\TestCase;
 use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Logging\DebugStack;
 use Doctrine\ORM\ORMException;
+use DoctrineORMModule\Options\EntityManager;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\ServiceManager;
 
@@ -228,7 +231,7 @@ abstract class EntityTestCase extends \PHPUnit_Framework_TestCase
 
         $globalConfig = $sl->get('config');
 
-        $options = new \DoctrineORMModule\Options\EntityManager($globalConfig['doctrine']['entitymanager'][$this->configurationKey]);
+        $options = new EntityManager($globalConfig['doctrine']['entitymanager'][$this->configurationKey]);
 
         /** @var \Doctrine\Orm\Configuration $config */
         $config = $sl->get($options->getConfiguration());
@@ -248,11 +251,11 @@ abstract class EntityTestCase extends \PHPUnit_Framework_TestCase
 
         // Setup use of SQL Logger
         if(empty(self::$sqlLogger)) {
-            self::$sqlLogger = new \Doctrine\DBAL\Logging\DebugStack();
+            self::$sqlLogger = new DebugStack();
         }
 
         $config->setSQLLogger(self::$sqlLogger);
-        $conn = \Doctrine\DBAL\DriverManager::getConnection($conn, $config, $this->eventManager);
+        $conn = DriverManager::getConnection($conn, $config, $this->eventManager);
 
         // initializing the resolver
         // @todo should actually attach it to a fetched event manager here, and not

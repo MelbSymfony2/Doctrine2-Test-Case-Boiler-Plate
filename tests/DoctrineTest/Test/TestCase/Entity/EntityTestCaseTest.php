@@ -1,22 +1,14 @@
 <?php
-/**
- * Created by JetBrains PhpStorm.
- * User: dustin
- * Date: 04/09/13
- * Time: 8:56 PM
- * To change this template use File | Settings | File Templates.
- */
-
 namespace DoctrineTest\Test\TestCase;
 
 
-use DoctrineTest\TestCase\EntityTestCase;
+use DoctrineTest\Test\Assets\MockEntityTestCase;
 
 class EntityTestCaseTest extends \PHPUnit_Framework_TestCase
 {
     function testGetEntityManager()
     {
-        $test = new EntityTestCase();
+        $test = new MockEntityTestCase();
         $em = $test->getEntityManager();
 
         $this->assertInstanceOf('Doctrine\ORM\EntityManager', $em);
@@ -35,7 +27,7 @@ class EntityTestCaseTest extends \PHPUnit_Framework_TestCase
 
     function testLoadSchema()
     {
-        $test = new EntityTestCase();
+        $test = new MockEntityTestCase();
         $test->loadSchemas(array('\DoctrineTest\Test\Assets\Model\Simple\Car'));
 
         $car = new \DoctrineTest\Test\Assets\Model\Simple\Car();
@@ -58,7 +50,7 @@ class EntityTestCaseTest extends \PHPUnit_Framework_TestCase
     {
         new \DoctrineTest\Test\Assets\Fixture\Simple\Car();
 
-        $test = new EntityTestCase();
+        $test = new MockEntityTestCase();
         $test->loadSchemas(array('\DoctrineTest\Test\Assets\Model\Simple\Car'));
         $test->loadFixture('\DoctrineTest\Test\Assets\Fixture\Simple\Car');
 
