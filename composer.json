@@ -1,0 +1,49 @@
+{
+    "name": "51systems/doctrine-test",
+    "description": "Doctrine2 Testing Library",
+    "type": "library",
+	"license": "LGPL-3.0",
+    "keywords": [
+        "Doctrine",
+        "test",
+        "phpUnit"
+    ],
+    "homepage": "https://github.com/51systems/doctrine-test",
+    "authors": [
+        {
+            "name": "Cameron Manderson",
+            "email": "cameronmanderson@gmail.com"
+        },
+        {
+            "name": "Dustin Thomson",
+            "email": "dthomson@51systems.com"
+        }
+    ],
+
+    "require": {
+        "php": ">=5.3",
+
+        "doctrine/doctrine-orm-module": ">=0.8.0",
+        "doctrine/orm": ">=2.3.0",
+        "gedmo/doctrine-extensions": ">=2.3",
+        "doctrine/data-fixtures": ">=1.0.0"
+    },
+
+    "require-dev": {
+        "zendframework/zend-test": "^3.0.1"
+    },
+
+    "autoload": {
+        "psr-0": {
+            "DoctrineTest": "src/"
+        }
+    },
+
+    "autoload-dev": {
+        "psr-0": {
+            "DoctrineTest\\Test\\": "tests/"
+        }
+    },
+    "bin": [
+    ]
+}
